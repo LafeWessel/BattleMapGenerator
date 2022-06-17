@@ -113,6 +113,9 @@ pub mod map{
 
         /// Create an empty board based on the widths and heights passed
         fn create_empty_board(width: usize, height: usize) -> Vec<Vec<MapTile>>{
+            // must be at least 2x2
+            assert!(width >= 2, "Must be at least 2 wide");
+            assert!(height >= 2, "Must be at least 2 high");
 
             // if width is odd, then the even columns will have $height-1$ tiles
             // if width is even, then all columns will have $height$ tiles
@@ -196,12 +199,14 @@ pub mod map{
             if self.board_height % 2 != 0{
                 print!(" \\");
             }
-            for _ in 0..self.board_width{
+            for _ in 0..self.board_width-1{
                 print!(" / \\");
             }
             if self.board_height % 2 == 0{
+                print!(" / \\ /");
+            } else{
                 print!(" /");
-            } 
+            }
             println!();
             println!();
 
@@ -212,4 +217,19 @@ pub mod map{
 
 
 
+}
+
+#[cfg(test)]
+mod tests{
+    use crate::map::Map;
+
+    #[test]
+    fn map_print(){
+        for i in 2..=10{
+            for j in 2..=10{
+                let m = Map::create_map(i,j,vec![]);
+                m.print_board();
+            }
+        }
+    }
 }
