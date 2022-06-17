@@ -1,7 +1,7 @@
 
 mod tiles{
 
-    enum CampaignMapTileType{
+    pub enum CampaignMapTileType{
         Forest,
         Hill,
         Mountain,
@@ -55,6 +55,33 @@ mod tiles{
         b_type: BattleMapTileType,
         // add_on: Option<AddOn>,
         // crossing: Option<RiverCrossing>,
+    }
+
+}
+
+
+mod map{
+
+    use crate::tiles::CampaignMapTileType;
+
+    struct MapGenerator{
+        input_tiles: Vec<CampaignMapTileType>
+    }
+
+    impl MapGenerator{
+        /// Create a new MapGenerator
+        pub fn new(tiles: Vec<CampaignMapTileType>) -> Self{
+            MapGenerator { input_tiles: tiles }
+        }
+
+        /// Create a new Map
+        pub fn generate_map(&self) -> Map{
+            todo!()
+        }
+    }
+
+    struct Map{
+        
     }
 
 }
