@@ -26,13 +26,20 @@ mod tiles{
         Town,
     }
 
-    // enum RoadTileTypes{
+    enum RoadTileType{
+        Straight, // has 3 rotations
+        Turn120, // has 6 rotations
+        BranchY, // has 2 rotations
+        Branch120, // has 6 rotations
+    }
 
-    // }
-
-    // enum RiverTileTypes{
-
-    // }
+    enum RiverTileType{
+        Straight, // has 3 rotations
+        Turn120, // has 6 rotations
+        BranchY, // has 2 rotations
+        Branch120, // has 6 rotations
+        Lake, // has 6 rotations
+    }
 
     // enum AddOn{
     //     Barricade,
