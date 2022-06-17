@@ -27,6 +27,23 @@ mod tiles{
         Town,
     }
 
+    impl BattleMapTileType{
+        pub fn to_console_string(&self) -> String{
+            String::from(match &self{
+                BattleMapTileType::Forest => "F",
+                BattleMapTileType::Hill => "H",
+                BattleMapTileType::Mountain => "M",
+                BattleMapTileType::Outpost => "O",
+                BattleMapTileType::Plains => "P",
+                BattleMapTileType::River => "R",
+                BattleMapTileType::Road => "V",
+                BattleMapTileType::Swamp => "S",
+                BattleMapTileType::Town => "T",
+            })
+        }
+
+    }
+
     enum RoadTileType{
         Straight, // has 3 rotations
         Turn120, // has 6 rotations
@@ -67,17 +84,21 @@ mod tiles{
         pub fn new(t_type: BattleMapTileType) -> Self{
             Self { t_type: t_type }
         }
+
+        pub fn to_console_string(&self) -> String{
+            self.t_type.to_console_string()
+        }
     }
 
 }
 
 
-mod map{
+pub mod map{
 
     use crate::tiles::{CampaignMapTileType, MapTile};
 
 
-    struct Map{
+    pub struct Map{
         tiles: Vec<Vec<MapTile>>,
         board_height: usize,
         board_width: usize,
@@ -92,25 +113,97 @@ mod map{
 
         /// Create an empty board based on the widths and heights passed
         fn create_empty_board(width: usize, height: usize) -> Vec<Vec<MapTile>>{
+
             // if width is odd, then the even columns will have $height-1$ tiles
             // if width is even, then all columns will have $height$ tiles
-
             match width % 2 == 0{
-                true => { // even
-                    vec![vec![MapTile::default(); height]; width]
+                true => { // even width
+                    vec![vec![MapTile::default(); width]; height]
                 },
-                false => { // odd
+                false => { // odd width
                     let mut b = vec![];
-                    for i in 0..width{
+                    for i in 0..height{
                         match i % 2 == 0{
-                            true => b.push(vec![MapTile::default(); width-1]),
-                            false => b.push(vec![MapTile::default(); width])
+                            true => b.push(vec![MapTile::default(); width]),
+                            false => b.push(vec![MapTile::default(); width-1])
                         };
                     }
                     b
                 }
             }
+        }
 
+        /// Print board to console
+        pub fn print_board(&self){
+            // use /,\,_,| to create board
+            println!("Board: {}w x {}h", self.board_width, self.board_height);
+
+            let mut j = 0;
+            while j < self.board_height{
+                // print top of even row
+                print!(" ");
+                for _ in 0..self.board_width{
+                    print!("/ \\_")
+                }
+                if self.board_width % 2 == 0{
+                    print!("/");
+                }
+                println!();
+
+                // print even row
+                for i in 0..self.board_width{
+                    assert!(j % 2 == 0);
+                    print!("| {} ", self.tiles[j][i].to_console_string());
+                }
+                println!("|");
+                j += 1;
+                
+                if j >= self.board_height{
+                    break;
+                }
+
+                // print bottom of even row
+                for _ in 0..self.board_width{
+                    print!(" \\_/");
+                }
+                if self.board_width % 2 == 0{
+                    print!(" \\_");
+                }
+                println!();
+
+                // print odd row
+                assert!(j % 2 == 1);
+                match self.board_width % 2 == 0{
+                    true => { // even -> same length columns
+                        print!(" ");
+                        for i in 0..self.board_width{ // odd row
+                            print!(" | {}", self.tiles[j][i].to_console_string())
+                        }
+                    },
+                    false => { // odd -> different length columns
+                        print!(" ");
+                        for i in 0..self.board_width-1 { // odd row
+                            print!(" | {}", self.tiles[j][i].to_console_string())
+                        }
+                    }
+                }
+                println!(" |");
+                j += 1;
+
+            }
+            
+            // print bottom row
+            if self.board_height % 2 != 0{
+                print!(" \\");
+            }
+            for _ in 0..self.board_width{
+                print!(" / \\");
+            }
+            if self.board_height % 2 == 0{
+                print!(" /");
+            } 
+            println!();
+            println!();
 
         }
 
