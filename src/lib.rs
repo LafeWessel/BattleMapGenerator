@@ -221,67 +221,40 @@ pub mod map{
             // self.tile_exists(row, column);
             
             // top right clockwise to top left
-            // top right
-            let top_right = match column == self.board_width-1 || row == 0{
-                true => None,
-                false => {
-                    Some(match row % 2 == 0{
-                        true => self.get_tile(row-1, column),
-                        false => self.get_tile(row-1, column+1)   
-                    })
-                }
-            };
-
-            // right
-            let right = match column > 0{
-                true => Some(self.get_tile(row, column-1)),
-                false => None
-            };
-
-            // bottom right
-            let bottom_right = match column == self.board_width-1 || row == self.board_height-1{
-                true => None,
-                false => {
-                    Some(match row % 2 == 0{
-                        true => self.get_tile(row+1, column),
-                        false => self.get_tile(row+1, column+1)   
-                    })
-                }
-            };
-
-            // bottom left
-            // let bottom_left = match row % 2 == 0{
-            //     true => {
-            //         match column == 0{
-            //             true => None,
-            //             false => Some(self.get_tile(row-1, column-1))
-            //         }
-            //     },
-            //     false => {
-            //         match row == self.board_height-1{
-            //             true => None,
-            //             false => 
-            //         }
-            //     }
-            // };
-
-            // left
-            let left = match column < self.board_width-1{
+            match row % 2 == 0{
                 true => {
-                    // if an odd row and odd width, also None, otherwise Some
-                    if column % 2 == 1 && self.board_width % 2 != 1{
-                        None
-                    } else{
-                        Some(self.get_tile(row, column+1))
-                    }
+                    // top right
+
+                    // right
+
+                    // bottom right
+
+                    // bottom left
+
+                    // left
+
+                    // top left
+                    vec![]
+                },
+                false => {
+                    // top right
+
+                    // right
+
+                    // bottom right
+
+                    // bottom left
+
+                    // left
+
+                    // top left
+                    vec![]
                 }
-                false => None
-            };
-
-            // top left
+            }
 
 
-            vec![top_right, right, bottom_right, left]
+
+            // vec![top_right, right, bottom_right, left]
         }
 
         /// Get a reference to a tile from the board
