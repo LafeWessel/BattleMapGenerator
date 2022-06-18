@@ -2,8 +2,8 @@ use map_generator::map::Map;
 
 fn main() {
 
-    for i in 2..=5{
-        for j in 2..=5{
+    for i in 4..=5{
+        for j in 4..=5{
             let m = Map::create_map(i,j,vec![]);
             m.print_board();
         }
