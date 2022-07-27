@@ -82,7 +82,7 @@ mod tiles{
         }
 
         pub fn new(t_type: BattleMapTileType) -> Self{
-            Self { t_type: t_type }
+            Self { t_type }
         }
 
         pub fn to_console_string(&self) -> String{
@@ -96,13 +96,35 @@ mod tiles{
 pub mod map{
 
     use crate::tiles::{CampaignMapTileType, MapTile};
+    
+    pub struct TileNeighbors<'a>{
+        tile_location: (usize, usize),
+        tile: &'a MapTile,
+        left: Option<&'a MapTile>,
+        upper_left: Option<&'a MapTile>,
+        upper_right: Option<&'a MapTile>,
+        right: Option<&'a MapTile>,
+        lower_right: Option<&'a MapTile>,
+        lower_left: Option<&'a MapTile>
+    }
 
+    impl<'a> TileNeighbors<'a>{
+        fn new(tile_location: (usize, usize), tile: &'a MapTile, 
+        left: Option<&'a MapTile>, upper_left: Option<&'a MapTile>, upper_right: Option<&'a MapTile>, 
+        right: Option<&'a MapTile>, lower_right: Option<&'a MapTile>, lower_left: Option<&'a MapTile>) -> Self{
+            TileNeighbors { tile_location, tile, 
+                left, upper_left, 
+                upper_right, right, 
+                lower_right, lower_left }
+        }
+    }
 
     pub struct Map{
         tiles: Vec<Vec<MapTile>>,
         board_height: usize,
         board_width: usize,
     }
+
 
     impl Map{
         pub fn create_map(board_width: usize, board_height: usize, map_tiles: Vec<CampaignMapTileType>) -> Self{
@@ -134,6 +156,8 @@ pub mod map{
                     b
                 }
             }
+
+            
         }
 
         /// Print board to console
@@ -217,52 +241,47 @@ pub mod map{
         }
 
         /// Get the neighbors of a given hex
-        pub fn get_neighbors(&self, row: usize, column: usize) -> Vec<Option<&MapTile>>{
-            // self.tile_exists(row, column);
+        pub fn get_neighbors(&self, row: usize, column: usize) -> TileNeighbors{
+
+            let tile = self.get_tile(row, column).expect("Tile must exist to get neighbors");
             
+            // right
+            let right = self.get_tile(row, column+1);
+            // left
+            let left = self.get_tile(row, column-1);
+
             // top right clockwise to top left
-            match row % 2 == 0{
+            let (upper_left, upper_right, lower_right, lower_left) = match row % 2 == 0{
                 true => {
-                    // top right
-
-                    // right
-
-                    // bottom right
-
-                    // bottom left
-
-                    // left
-
-                    // top left
-                    vec![]
+                    // upper left
+                    let ul = self.get_tile(row-1, column-1);
+                    // upper right
+                    let ur = self.get_tile(row-1, column);
+                    // lower right
+                    let lr = self.get_tile(row+1, column);
+                    // lower left
+                    let ll = self.get_tile(row+1, column-1);
+                    (ul, ur, lr, ll)
                 },
                 false => {
-                    // top right
-
-                    // right
-
-                    // bottom right
-
-                    // bottom left
-
-                    // left
-
-                    // top left
-                    vec![]
+                    // upper left
+                    let ul = self.get_tile(row-1, column);
+                    // upper right
+                    let ur = self.get_tile(row-1, column+1);
+                    // lower right
+                    let lr = self.get_tile(row+1, column);
+                    // lower left
+                    let ll = self.get_tile(row+1, column+1);
+                    (ul, ur, lr, ll)
                 }
-            }
+            };
+            
+            TileNeighbors::new((row, column), tile, left, upper_left, upper_right, right, lower_right, lower_left)
 
-
-
-            // vec![top_right, right, bottom_right, left]
         }
 
         /// Get a reference to a tile from the board
-        pub fn get_tile(&self, row: usize, column: usize) -> &MapTile{
-            &self.tiles[row][column]
-        }
-
-        fn get_tile_option(&self, row: usize, column: usize) -> Option<&MapTile>{
+        fn get_tile(&self, row: usize, column: usize) -> Option<&MapTile>{
             match self.tiles.get(row){
                 Some(v) => {
                     match v.get(column){
