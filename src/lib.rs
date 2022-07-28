@@ -161,6 +161,7 @@ pub mod map{
 
 
     impl Map{
+        // TODO: add parameters to initialize MapTiles
         pub fn create_map(board_width: usize, board_height: usize) -> Self{
             let mut board = Map::create_empty_board(board_width, board_height);
 
