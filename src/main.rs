@@ -2,9 +2,9 @@ use map_generator::map::Map;
 
 fn main() {
 
-    for i in 4..=5{
-        for j in 4..=5{
-            let m = Map::create_map(i,j,vec![]);
+    for i in 2..=5{
+        for j in 2..=5{
+            let m = Map::create_map(i,j);
             m.print_board();
         }
     }

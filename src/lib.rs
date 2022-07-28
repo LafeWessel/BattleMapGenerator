@@ -14,7 +14,7 @@ mod tiles{
     }
 
     // TODO add any missing tile types that are in the base game
-    #[derive(Clone)]
+    #[derive(Clone, PartialEq, Eq, Debug)]
     pub enum BattleMapTileType{
         Forest,
         Hill,
@@ -69,7 +69,7 @@ mod tiles{
     //     BridgeWood
     // }
 
-    #[derive(Clone)]
+    #[derive(Clone, PartialEq, Eq, Debug)]
     pub struct MapTile{
         t_type: BattleMapTileType,
         // add_on: Option<AddOn>,
@@ -117,6 +117,40 @@ pub mod map{
                 upper_right, right, 
                 lower_right, lower_left }
         }
+
+        pub fn get_tile_location(&self) -> (usize, usize){
+            self.tile_location
+        }
+
+        pub fn tile_type(&self) -> &MapTile{
+            self.tile
+        }
+
+        pub fn get_lower_left(&self) -> Option<&'a MapTile>{
+            self.lower_left
+        }      
+
+        pub fn get_left(&self) -> Option<&'a MapTile>{
+            self.left
+        }
+
+        pub fn get_upper_left(&self) -> Option<&'a MapTile>{
+            self.upper_left
+        }
+
+        pub fn get_upper_right(&self) -> Option<&'a MapTile>{
+            self.upper_right
+        }
+
+        pub fn get_right(&self) -> Option<&'a MapTile>{
+            self.right
+        }
+
+        pub fn get_lower_right(&self) -> Option<&'a MapTile>{
+            self.lower_right
+        }
+
+
     }
 
     pub struct Map{
@@ -127,7 +161,7 @@ pub mod map{
 
 
     impl Map{
-        pub fn create_map(board_width: usize, board_height: usize, map_tiles: Vec<CampaignMapTileType>) -> Self{
+        pub fn create_map(board_width: usize, board_height: usize) -> Self{
             let mut board = Map::create_empty_board(board_width, board_height);
 
             Map { tiles: board, board_height, board_width }
@@ -248,30 +282,48 @@ pub mod map{
             // right
             let right = self.get_tile(row, column+1);
             // left
-            let left = self.get_tile(row, column-1);
+            let left = match column == 0 {
+                true => None,
+                false => self.get_tile(row, column-1)
+            };
 
             // top right clockwise to top left
             let (upper_left, upper_right, lower_right, lower_left) = match row % 2 == 0{
                 true => {
                     // upper left
-                    let ul = self.get_tile(row-1, column-1);
+                    let ul = match row == 0 || column == 0 { 
+                        true => None,
+                        false => self.get_tile(row-1, column-1)
+                    };
                     // upper right
-                    let ur = self.get_tile(row-1, column);
+                    let ur = match row == 0 {
+                        true => None,
+                        false => self.get_tile(row-1, column)
+                    };
                     // lower right
                     let lr = self.get_tile(row+1, column);
                     // lower left
-                    let ll = self.get_tile(row+1, column-1);
+                    let ll = match column == 0 {
+                        true => None,
+                        false => self.get_tile(row+1, column-1)
+                    };
                     (ul, ur, lr, ll)
                 },
                 false => {
                     // upper left
-                    let ul = self.get_tile(row-1, column);
+                    let ul = match row == 0{
+                        true => None,
+                        false => self.get_tile(row-1, column)
+                    };
                     // upper right
-                    let ur = self.get_tile(row-1, column+1);
+                    let ur = match row == 0{
+                        true => None,
+                        false => self.get_tile(row-1, column+1)
+                    };
                     // lower right
-                    let lr = self.get_tile(row+1, column);
+                    let lr = self.get_tile(row+1, column+1);
                     // lower left
-                    let ll = self.get_tile(row+1, column+1);
+                    let ll = self.get_tile(row+1, column);
                     (ul, ur, lr, ll)
                 }
             };
@@ -284,13 +336,16 @@ pub mod map{
         fn get_tile(&self, row: usize, column: usize) -> Option<&MapTile>{
             match self.tiles.get(row){
                 Some(v) => {
-                    match v.get(column){
-                        Some(s) => Some(s),
-                        None => None
-                    }
+                    v.get(column)
                 },
                 None => None
             }
+        }
+
+        /// Set a tile
+        pub fn set_tile(&mut self, row: usize, column: usize, tile: MapTile){
+            self.get_tile(row, column).expect(&format!("Tile must exist to set, ({},{})", row, column));
+            self.tiles[row][column] = tile;
         }
 
 
@@ -302,15 +357,62 @@ pub mod map{
 
 #[cfg(test)]
 mod tests{
-    use crate::map::Map;
+    use crate::{map::Map, tiles::{BattleMapTileType, MapTile}};
 
     #[test]
     fn map_print(){
         for i in 2..=10{
             for j in 2..=10{
-                let m = Map::create_map(i,j,vec![]);
+                let m = Map::create_map(i,j);
                 m.print_board();
             }
         }
+    }
+
+    #[test]
+    fn get_neighbors(){
+        // Arrange
+        let mut m = Map::create_map(3, 3);
+        m.set_tile(0, 0, MapTile::new(BattleMapTileType::Plains));
+        m.set_tile(0, 1, MapTile::new(BattleMapTileType::Forest));
+        m.set_tile(0, 2, MapTile::new(BattleMapTileType::Hill));
+        m.set_tile(1, 0, MapTile::new(BattleMapTileType::Mountain));
+        m.set_tile(1, 1, MapTile::new(BattleMapTileType::Outpost));
+        m.set_tile(2, 0, MapTile::new(BattleMapTileType::Road));
+        m.set_tile(2, 1, MapTile::new(BattleMapTileType::Swamp));
+        m.set_tile(2, 2, MapTile::new(BattleMapTileType::Town));
+        
+        // Act
+        let neighbors_0_0 = m.get_neighbors(0, 0);
+        let neighbors_1_1 = m.get_neighbors(1, 1);
+        let neighbors_2_1 = m.get_neighbors(2, 1);
+
+        // Assert
+        assert_eq!(neighbors_0_0.get_tile_location(), (0,0));
+        assert_eq!(neighbors_0_0.tile_type(), &MapTile::new(BattleMapTileType::Plains));
+        assert_eq!(neighbors_0_0.get_left(), None);
+        assert_eq!(neighbors_0_0.get_upper_left(), None);
+        assert_eq!(neighbors_0_0.get_upper_right(), None);
+        assert_eq!(neighbors_0_0.get_right(), Some(&MapTile::new(BattleMapTileType::Forest)));
+        assert_eq!(neighbors_0_0.get_lower_right(), Some(&MapTile::new(BattleMapTileType::Mountain)));
+        assert_eq!(neighbors_0_0.get_lower_left(), None);
+        
+        assert_eq!(neighbors_1_1.get_tile_location(), (1,1));
+        assert_eq!(neighbors_1_1.tile_type(), &MapTile::new(BattleMapTileType::Outpost));
+        assert_eq!(neighbors_1_1.get_left(), Some(&MapTile::new(BattleMapTileType::Mountain)));
+        assert_eq!(neighbors_1_1.get_upper_left(), Some(&MapTile::new(BattleMapTileType::Forest)));
+        assert_eq!(neighbors_1_1.get_upper_right(), Some(&MapTile::new(BattleMapTileType::Hill)));
+        assert_eq!(neighbors_1_1.get_right(), None);
+        assert_eq!(neighbors_1_1.get_lower_right(), Some(&MapTile::new(BattleMapTileType::Town)));
+        assert_eq!(neighbors_1_1.get_lower_left(), Some(&MapTile::new(BattleMapTileType::Swamp)));
+        
+        assert_eq!(neighbors_2_1.get_tile_location(), (2,1));
+        assert_eq!(neighbors_2_1.tile_type(), &MapTile::new(BattleMapTileType::Swamp));
+        assert_eq!(neighbors_2_1.get_left(), Some(&MapTile::new(BattleMapTileType::Road)));
+        assert_eq!(neighbors_2_1.get_upper_left(), Some(&MapTile::new(BattleMapTileType::Mountain)));
+        assert_eq!(neighbors_2_1.get_upper_right(), Some(&MapTile::new(BattleMapTileType::Outpost)));
+        assert_eq!(neighbors_2_1.get_right(), Some(&MapTile::new(BattleMapTileType::Town)));
+        assert_eq!(neighbors_2_1.get_lower_right(), None);
+        assert_eq!(neighbors_2_1.get_lower_left(), None);
     }
 }
