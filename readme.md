@@ -6,7 +6,7 @@ Takes a given position on the game board and the surrounding tiles to generate a
 
 How should this be done?
 
-- Take the battle tile and all tiles within 1 (2?)
+- Take the battle tile and all tiles within 1 (7 total)
 - Determine if there are roads/towns
 - Determine how much should be forest, mountain, hill, plain, swamp, etc.
 - Add tiles
