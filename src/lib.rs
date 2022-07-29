@@ -1,5 +1,5 @@
 
-mod tiles{
+mod map_tiles{
 
     pub enum CampaignMapTileType{
         Forest,
@@ -11,6 +11,27 @@ mod tiles{
         Road,
         Swamp,
         Town,
+    }
+
+    /// Campaign Tiles from which the battle map will be generated
+    /// Left and right flank tiles are taken from the attacker's perspective
+    pub struct CampaignGenerationTiles{
+        attacker_tile: CampaignMapTileType,
+        defender_tile: CampaignMapTileType,
+        left_flank_tile: CampaignMapTileType,
+        right_flank_tile: CampaignMapTileType
+    }
+
+    impl CampaignGenerationTiles{
+        pub fn new(attacker_tile: CampaignMapTileType, defender_tile: CampaignMapTileType,
+             left_flank_tile: CampaignMapTileType, right_flank_tile: CampaignMapTileType) -> Self{
+                CampaignGenerationTiles{
+                    attacker_tile,
+                    defender_tile,
+                    left_flank_tile,
+                    right_flank_tile
+                }
+        }
     }
 
     // TODO add any missing tile types that are in the base game
@@ -41,7 +62,6 @@ mod tiles{
                 BattleMapTileType::Town => "T",
             })
         }
-
     }
 
     enum RoadTileType{
@@ -93,9 +113,9 @@ mod tiles{
 }
 
 
-pub mod map{
+pub mod battle_map{
 
-    use crate::tiles::{CampaignMapTileType, MapTile};
+    use crate::map_tiles::{CampaignMapTileType, MapTile, CampaignGenerationTiles};
     
     pub struct TileNeighbors<'a>{
         tile_location: (usize, usize),
@@ -112,10 +132,12 @@ pub mod map{
         fn new(tile_location: (usize, usize), tile: &'a MapTile, 
         left: Option<&'a MapTile>, upper_left: Option<&'a MapTile>, upper_right: Option<&'a MapTile>, 
         right: Option<&'a MapTile>, lower_right: Option<&'a MapTile>, lower_left: Option<&'a MapTile>) -> Self{
-            TileNeighbors { tile_location, tile, 
+            TileNeighbors { 
+                tile_location, tile,
                 left, upper_left, 
                 upper_right, right, 
-                lower_right, lower_left }
+                lower_right, lower_left
+             }
         }
 
         pub fn get_tile_location(&self) -> (usize, usize){
@@ -153,12 +175,26 @@ pub mod map{
 
     }
 
+    pub struct MapGenerator{
+        base_tiles: CampaignGenerationTiles
+    }
+
+    impl MapGenerator
+    {
+        pub fn new(base_tiles: CampaignGenerationTiles) -> Self {
+            MapGenerator{
+                base_tiles
+            }
+        }
+    }
+
+
+
     pub struct Map{
         tiles: Vec<Vec<MapTile>>,
         board_height: usize,
         board_width: usize,
     }
-
 
     impl Map{
         // TODO: add parameters to initialize MapTiles
@@ -358,7 +394,7 @@ pub mod map{
 
 #[cfg(test)]
 mod tests{
-    use crate::{map::Map, tiles::{BattleMapTileType, MapTile}};
+    use crate::{battle_map::Map, map_tiles::{BattleMapTileType, MapTile}};
 
     #[test]
     fn map_print(){

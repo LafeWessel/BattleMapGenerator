@@ -1,4 +1,4 @@
-use map_generator::map::Map;
+use map_generator::battle_map::Map;
 
 fn main() {
 
