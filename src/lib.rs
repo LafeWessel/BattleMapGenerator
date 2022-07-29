@@ -197,11 +197,18 @@ pub mod battle_map{
     }
 
     impl Map{
+
+        /// Create the default map size (15w x 11h)
+        pub fn create_default_map() -> Self{
+            Map::create_map(15, 11)
+        }
+
         // TODO: add parameters to initialize MapTiles
         pub fn create_map(board_width: usize, board_height: usize) -> Self{
-            let mut board = Map::create_empty_board(board_width, board_height);
-
-            Map { tiles: board, board_height, board_width }
+            Map { 
+                tiles: Map::create_empty_board(board_width, board_height), 
+                board_height, board_width
+             }
         }
 
         /// Create an empty board based on the widths and heights passed
