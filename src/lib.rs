@@ -247,24 +247,7 @@ pub mod battle_map{
             assert!(width >= 4, "Must be at least 4 wide");
             assert!(height >= 2, "Must be at least 2 high");
 
-            // if width is odd, then the even columns will have $height-1$ tiles
-            // if width is even, then all columns will have $height$ tiles
-            match width % 2 == 0{
-                true => { // even width
-                    vec![vec![MapTile::default(); width]; height]
-                },
-                false => { // odd width
-                    let mut b = vec![];
-                    for i in 0..height{
-                        match i % 2 == 0{
-                            true => b.push(vec![MapTile::default(); width]),
-                            false => b.push(vec![MapTile::default(); width-1])
-                        };
-                    }
-                    b
-                }
-            }
-
+            vec![vec![MapTile::default(); width]; height]
             
         }
 
@@ -280,10 +263,7 @@ pub mod battle_map{
                 for _ in 0..self.board_width{
                     print!("/ \\_")
                 }
-                if self.board_width % 2 == 0{
-                    print!("/");
-                }
-                println!();
+                println!("/");
 
                 // print even row
                 for i in 0..self.board_width{
@@ -301,27 +281,15 @@ pub mod battle_map{
                 for _ in 0..self.board_width{
                     print!(" \\_/");
                 }
-                if self.board_width % 2 == 0{
-                    print!(" \\_");
-                }
-                println!();
+                println!(" \\");
 
                 // print odd row
                 assert!(j % 2 == 1);
-                match self.board_width % 2 == 0{
-                    true => { // even -> same length columns
-                        print!(" ");
-                        for i in 0..self.board_width{ // odd row
-                            print!(" | {}", self.tiles[j][i].to_console_string())
-                        }
-                    },
-                    false => { // odd -> different length columns
-                        print!(" ");
-                        for i in 0..self.board_width-1 { // odd row
-                            print!(" | {}", self.tiles[j][i].to_console_string())
-                        }
-                    }
+                print!(" ");
+                for i in 0..self.board_width{ // odd row
+                    print!(" | {}", self.tiles[j][i].to_console_string())
                 }
+     
                 println!(" |");
                 j += 1;
 
@@ -334,12 +302,8 @@ pub mod battle_map{
             for _ in 0..self.board_width-1{
                 print!(" / \\");
             }
+            print!(" / \\");
             if self.board_height % 2 == 0{
-                print!(" / \\");
-            }else{
-                print!(" /");
-            }
-            if (self.board_height % 2 == 0) && (self.board_width % 2 == 0){
                 print!(" /");
             }
 
@@ -435,7 +399,7 @@ mod tests{
 
     #[test]
     fn map_print(){
-        for i in 2..=10{
+        for i in 4..=10{
             for j in 2..=10{
                 let m = Map::create_map(i,j);
                 m.print_board();
@@ -447,7 +411,7 @@ mod tests{
     fn get_neighbors(){
         // Arrange
         let own = TileOwner::Attacker;
-        let mut m = Map::create_map(3, 3);
+        let mut m = Map::create_map(4, 3);
         m.set_tile(0, 0, MapTile::new(BattleMapTileType::Plains, own.clone()));
         m.set_tile(0, 1, MapTile::new(BattleMapTileType::Forest, own.clone()));
         m.set_tile(0, 2, MapTile::new(BattleMapTileType::Hill, own.clone()));
@@ -477,7 +441,7 @@ mod tests{
         assert_eq!(neighbors_1_1.get_left(), Some(&MapTile::new(BattleMapTileType::Mountain, own.clone())));
         assert_eq!(neighbors_1_1.get_upper_left(), Some(&MapTile::new(BattleMapTileType::Forest, own.clone())));
         assert_eq!(neighbors_1_1.get_upper_right(), Some(&MapTile::new(BattleMapTileType::Hill, own.clone())));
-        assert_eq!(neighbors_1_1.get_right(), None);
+        assert_eq!(neighbors_1_1.get_right(), Some(&MapTile::new(BattleMapTileType::Plains, own.clone())));
         assert_eq!(neighbors_1_1.get_lower_right(), Some(&MapTile::new(BattleMapTileType::Town, own.clone())));
         assert_eq!(neighbors_1_1.get_lower_left(), Some(&MapTile::new(BattleMapTileType::Swamp, own.clone())));
         
