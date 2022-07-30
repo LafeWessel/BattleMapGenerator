@@ -127,8 +127,8 @@ mod map_tiles{
              }
         }
 
-        pub fn new(t_type: BattleMapTileType, owner: TileOwner) -> Self{
-            Self { t_type, owner }
+        pub fn new(t_type: BattleMapTileType) -> Self{
+            Self { t_type, owner: TileOwner::Attacker }
         }
 
         pub fn to_console_string(&self) -> String{
@@ -412,14 +412,14 @@ mod tests{
         // Arrange
         let own = TileOwner::Attacker;
         let mut m = Map::create_map(4, 3);
-        m.set_tile(0, 0, MapTile::new(BattleMapTileType::Plains, own.clone()));
-        m.set_tile(0, 1, MapTile::new(BattleMapTileType::Forest, own.clone()));
-        m.set_tile(0, 2, MapTile::new(BattleMapTileType::Hill, own.clone()));
-        m.set_tile(1, 0, MapTile::new(BattleMapTileType::Mountain, own.clone()));
-        m.set_tile(1, 1, MapTile::new(BattleMapTileType::Outpost, own.clone()));
-        m.set_tile(2, 0, MapTile::new(BattleMapTileType::Road, own.clone()));
-        m.set_tile(2, 1, MapTile::new(BattleMapTileType::Swamp, own.clone()));
-        m.set_tile(2, 2, MapTile::new(BattleMapTileType::Town, own.clone()));
+        m.set_tile(0, 0, MapTile::new(BattleMapTileType::Plains));
+        m.set_tile(0, 1, MapTile::new(BattleMapTileType::Forest));
+        m.set_tile(0, 2, MapTile::new(BattleMapTileType::Hill));
+        m.set_tile(1, 0, MapTile::new(BattleMapTileType::Mountain));
+        m.set_tile(1, 1, MapTile::new(BattleMapTileType::Outpost));
+        m.set_tile(2, 0, MapTile::new(BattleMapTileType::Road));
+        m.set_tile(2, 1, MapTile::new(BattleMapTileType::Swamp));
+        m.set_tile(2, 2, MapTile::new(BattleMapTileType::Town));
         
         // Act
         let neighbors_0_0 = m.get_neighbors(0, 0);
@@ -428,29 +428,29 @@ mod tests{
 
         // Assert
         assert_eq!(neighbors_0_0.get_tile_location(), (0,0));
-        assert_eq!(neighbors_0_0.tile_type(), &MapTile::new(BattleMapTileType::Plains, own.clone()));
+        assert_eq!(neighbors_0_0.tile_type(), &MapTile::new(BattleMapTileType::Plains));
         assert_eq!(neighbors_0_0.get_left(), None);
         assert_eq!(neighbors_0_0.get_upper_left(), None);
         assert_eq!(neighbors_0_0.get_upper_right(), None);
-        assert_eq!(neighbors_0_0.get_right(), Some(&MapTile::new(BattleMapTileType::Forest, own.clone())));
-        assert_eq!(neighbors_0_0.get_lower_right(), Some(&MapTile::new(BattleMapTileType::Mountain, own.clone())));
+        assert_eq!(neighbors_0_0.get_right(), Some(&MapTile::new(BattleMapTileType::Forest)));
+        assert_eq!(neighbors_0_0.get_lower_right(), Some(&MapTile::new(BattleMapTileType::Mountain)));
         assert_eq!(neighbors_0_0.get_lower_left(), None);
         
         assert_eq!(neighbors_1_1.get_tile_location(), (1,1));
-        assert_eq!(neighbors_1_1.tile_type(), &MapTile::new(BattleMapTileType::Outpost, own.clone()));
-        assert_eq!(neighbors_1_1.get_left(), Some(&MapTile::new(BattleMapTileType::Mountain, own.clone())));
-        assert_eq!(neighbors_1_1.get_upper_left(), Some(&MapTile::new(BattleMapTileType::Forest, own.clone())));
-        assert_eq!(neighbors_1_1.get_upper_right(), Some(&MapTile::new(BattleMapTileType::Hill, own.clone())));
-        assert_eq!(neighbors_1_1.get_right(), Some(&MapTile::new(BattleMapTileType::Plains, own.clone())));
-        assert_eq!(neighbors_1_1.get_lower_right(), Some(&MapTile::new(BattleMapTileType::Town, own.clone())));
-        assert_eq!(neighbors_1_1.get_lower_left(), Some(&MapTile::new(BattleMapTileType::Swamp, own.clone())));
+        assert_eq!(neighbors_1_1.tile_type(), &MapTile::new(BattleMapTileType::Outpost));
+        assert_eq!(neighbors_1_1.get_left(), Some(&MapTile::new(BattleMapTileType::Mountain)));
+        assert_eq!(neighbors_1_1.get_upper_left(), Some(&MapTile::new(BattleMapTileType::Forest)));
+        assert_eq!(neighbors_1_1.get_upper_right(), Some(&MapTile::new(BattleMapTileType::Hill)));
+        assert_eq!(neighbors_1_1.get_right(), Some(&MapTile::new(BattleMapTileType::Plains)));
+        assert_eq!(neighbors_1_1.get_lower_right(), Some(&MapTile::new(BattleMapTileType::Town)));
+        assert_eq!(neighbors_1_1.get_lower_left(), Some(&MapTile::new(BattleMapTileType::Swamp)));
         
         assert_eq!(neighbors_2_1.get_tile_location(), (2,1));
-        assert_eq!(neighbors_2_1.tile_type(), &MapTile::new(BattleMapTileType::Swamp, own.clone()));
-        assert_eq!(neighbors_2_1.get_left(), Some(&MapTile::new(BattleMapTileType::Road, own.clone())));
-        assert_eq!(neighbors_2_1.get_upper_left(), Some(&MapTile::new(BattleMapTileType::Mountain, own.clone())));
-        assert_eq!(neighbors_2_1.get_upper_right(), Some(&MapTile::new(BattleMapTileType::Outpost, own.clone())));
-        assert_eq!(neighbors_2_1.get_right(), Some(&MapTile::new(BattleMapTileType::Town, own.clone())));
+        assert_eq!(neighbors_2_1.tile_type(), &MapTile::new(BattleMapTileType::Swamp));
+        assert_eq!(neighbors_2_1.get_left(), Some(&MapTile::new(BattleMapTileType::Road)));
+        assert_eq!(neighbors_2_1.get_upper_left(), Some(&MapTile::new(BattleMapTileType::Mountain)));
+        assert_eq!(neighbors_2_1.get_upper_right(), Some(&MapTile::new(BattleMapTileType::Outpost)));
+        assert_eq!(neighbors_2_1.get_right(), Some(&MapTile::new(BattleMapTileType::Town)));
         assert_eq!(neighbors_2_1.get_lower_right(), None);
         assert_eq!(neighbors_2_1.get_lower_left(), None);
     }
