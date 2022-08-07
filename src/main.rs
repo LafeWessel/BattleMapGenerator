@@ -11,8 +11,8 @@ fn main() {
 
     Map::create_default_map().print_board_tiles();
 
-    let m = Map::create_map(4, 6, vec![]);
-    m.print_board();
+    // let m = Map::create_map(4, 6, vec![]);
+    // m.print_board();
 
 
     for i in 4..=5{
