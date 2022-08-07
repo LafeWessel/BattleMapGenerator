@@ -30,31 +30,50 @@ mod map_tiles{
             match self {
                 TileOwner::Defender => String::from("D").cyan(),
                 TileOwner::Attacker => String::from("A").red(),
-                TileOwner::LeftFlank => String::from("L").purple().on_white(),
-                TileOwner::RightFlank => String::from("R").blue().on_white(),
-                TileOwner::SplitAttDef => String::from("S").yellow().on_black()
+                TileOwner::LeftFlank => String::from("L").green(),
+                TileOwner::RightFlank => String::from("R").purple(),
+                TileOwner::SplitAttDef => String::from("S").yellow()
             }
         }
     }
 
     /// Campaign Tiles from which the battle map will be generated
-    /// Left and right flank tiles are taken from the attacker's perspective
+    /// Left and right flank tiles are taken from the defender's perspective
     pub struct CampaignGenerationTiles{
         attacker: CampaignMapTileType,
         defender: CampaignMapTileType,
         left_flank: CampaignMapTileType,
-        right_flank: CampaignMapTileType
+        right_flank: CampaignMapTileType,
+        cities_within_5: u32, // for calculating population density
+        rivers_within_5: u32, // for calculating any streams
+        mountains_within_5: u32, // for calculating terrain roughness
     }
 
     impl CampaignGenerationTiles{
         pub fn new(attacker: CampaignMapTileType, defender: CampaignMapTileType,
-             left_flank: CampaignMapTileType, right_flank: CampaignMapTileType) -> Self{
+             left_flank: CampaignMapTileType, right_flank: CampaignMapTileType,
+            cities: u32, rivers: u32, mountains: u32) -> Self{
                 CampaignGenerationTiles{
                     attacker,
                     defender,
                     left_flank,
-                    right_flank
+                    right_flank,
+                    cities_within_5: cities,
+                    rivers_within_5: rivers,
+                    mountains_within_5: mountains
                 }
+        }
+
+        pub fn default() -> Self{
+            CampaignGenerationTiles { 
+                attacker: CampaignMapTileType::Plains,
+                defender: CampaignMapTileType::Plains,
+                left_flank: CampaignMapTileType::Plains,
+                right_flank: CampaignMapTileType::Plains,
+                cities_within_5: 0,
+                rivers_within_5: 0,
+                mountains_within_5: 0
+            }
         }
     }
 
@@ -236,6 +255,88 @@ pub mod battle_map{
                 base_tiles
             }
         }
+
+        pub fn default() -> Self{
+            MapGenerator{
+                base_tiles: CampaignGenerationTiles::default()
+            }
+        }
+
+
+        /// Create the default map size (15w x 11h)
+        pub fn create_default_map(&self) -> Map{
+            self.create_map(15, 11)
+        }
+
+        // TODO: add parameters to initialize MapTiles
+        pub fn create_map(&self, board_width: usize, board_height: usize) -> Map{
+            let mut m = Map { 
+                tiles: self.create_empty_board(board_width, board_height), 
+                board_height, board_width
+                };
+
+                self.set_tile_owners(&mut m);
+                m
+        }
+
+        /// Create an empty board based on the widths and heights passed
+        fn create_empty_board(&self, width: usize, height: usize) -> Vec<Vec<MapTile>>{
+            // must be at least 2x2
+            assert!(width >= 4, "Must be at least 4 wide");
+            assert!(height >= 2, "Must be at least 2 high");
+
+            vec![vec![MapTile::default(); width]; height]
+            
+        }
+
+        pub fn generate_map(){
+
+        }
+
+
+        fn set_tile_owners(&self, map: &mut Map){
+            let flank_width = map.board_width / 4;
+            let vertical_owner_depth = map.board_height / 2;
+            
+            // set flank owners
+            for v in map.tiles.iter_mut(){
+                for t in v.iter_mut().take(flank_width){
+                    t.set_owner(TileOwner::LeftFlank);
+                }
+
+                for t in v.iter_mut().skip(map.board_width - flank_width){
+                    t.set_owner(TileOwner::RightFlank);
+                }
+            }
+
+            // set attacker owners
+            for v in map.tiles.iter_mut().take(vertical_owner_depth){
+                for t in v.iter_mut().skip(flank_width).take(map.board_width - (2 * flank_width)){
+                    t.set_owner(TileOwner::Attacker);
+                }
+            }
+
+            // set defender owners
+            for v in map.tiles.iter_mut().skip(map.board_height - vertical_owner_depth){
+                for t in v.iter_mut().skip(flank_width).take(map.board_width - (2 * flank_width)){
+                    t.set_owner(TileOwner::Defender);
+                }
+            }
+
+            // set split owners if odd height
+            if map.board_height % 2 == 1{
+                for t in  map.tiles[vertical_owner_depth].iter_mut().skip(flank_width).take(map.board_width - (2 * flank_width)){
+                    t.set_owner(TileOwner::SplitAttDef);
+                }
+            }
+
+
+        }
+
+
+
+
+
     }
 
 
@@ -248,70 +349,8 @@ pub mod battle_map{
 
     impl Map{
 
-        /// Create the default map size (15w x 11h)
-        pub fn create_default_map() -> Self{
-            Map::create_map(15, 11)
-        }
-
-        // TODO: add parameters to initialize MapTiles
-        pub fn create_map(board_width: usize, board_height: usize) -> Self{
-            let mut m = Map { 
-                tiles: Map::create_empty_board(board_width, board_height), 
-                board_height, board_width
-             };
-
-             m.set_tile_owners();
-             m
-        }
-
-        /// Create an empty board based on the widths and heights passed
-        fn create_empty_board(width: usize, height: usize) -> Vec<Vec<MapTile>>{
-            // must be at least 2x2
-            assert!(width >= 4, "Must be at least 4 wide");
-            assert!(height >= 2, "Must be at least 2 high");
-
-            vec![vec![MapTile::default(); width]; height]
-            
-        }
-
-        fn set_tile_owners(&mut self){
-            let flank_width = self.board_width / 4;
-            let vertical_owner_depth = self.board_height / 2;
-            
-            // set flank owners
-            for v in self.tiles.iter_mut(){
-                for t in v.iter_mut().take(flank_width){
-                    t.set_owner(TileOwner::LeftFlank);
-                }
-
-                for t in v.iter_mut().skip(self.board_width - flank_width){
-                    t.set_owner(TileOwner::RightFlank);
-                }
-            }
-
-            // set attacker owners
-            for v in self.tiles.iter_mut().take(vertical_owner_depth){
-                for t in v.iter_mut().skip(flank_width).take(self.board_width - (2 * flank_width)){
-                    t.set_owner(TileOwner::Attacker);
-                }
-            }
-
-            // set defender owners
-            for v in self.tiles.iter_mut().skip(self.board_height - vertical_owner_depth){
-                for t in v.iter_mut().skip(flank_width).take(self.board_width - (2 * flank_width)){
-                    t.set_owner(TileOwner::Defender);
-                }
-            }
-
-            // set split owners if odd height
-            if self.board_height % 2 == 1{
-                for t in  self.tiles[vertical_owner_depth].iter_mut().skip(flank_width).take(self.board_width - (2 * flank_width)){
-                    t.set_owner(TileOwner::SplitAttDef);
-                }
-            }
 
 
-        }
 
         pub fn print_board_tiles(&self){
             self.print_board(&self.tiles.iter().map(|v| v.iter().map(|i| i.tile_type_string()).collect()).collect())
@@ -465,13 +504,13 @@ pub mod battle_map{
 
 #[cfg(test)]
 mod tests{
-    use crate::{battle_map::Map, map_tiles::{BattleMapTileType, MapTile, TileOwner}};
+    use crate::{battle_map::{Map, MapGenerator}, map_tiles::{BattleMapTileType, MapTile, TileOwner}};
 
     #[test]
     fn map_print(){
         for i in 4..=10{
             for j in 2..=10{
-                let m = Map::create_map(i,j);
+                let m = MapGenerator::default().create_map(i,j);
                 m.print_board_tiles();
             }
         }
@@ -481,7 +520,7 @@ mod tests{
     fn get_neighbors(){
         // Arrange
         let own = TileOwner::Attacker;
-        let mut m = Map::create_map(4, 3);
+        let mut m = MapGenerator::default().create_map(4, 3);
         m.set_tile(0, 0, MapTile::new(BattleMapTileType::Plains));
         m.set_tile(0, 1, MapTile::new(BattleMapTileType::Forest));
         m.set_tile(0, 2, MapTile::new(BattleMapTileType::Hill));
@@ -530,7 +569,7 @@ mod tests{
     fn tile_owners(){
 
         // even width, even height
-        let mut m = Map::create_map(4, 2);
+        let mut m = MapGenerator::default().create_map(4, 2);
         assert_eq!(&TileOwner::LeftFlank, m.get_tile(0, 0).unwrap().get_owner());
         assert_eq!(&TileOwner::Attacker, m.get_tile(0, 1).unwrap().get_owner());
         assert_eq!(&TileOwner::Attacker, m.get_tile(0, 2).unwrap().get_owner());
@@ -541,7 +580,7 @@ mod tests{
         assert_eq!(&TileOwner::RightFlank, m.get_tile(1, 3).unwrap().get_owner());
 
         // even width, odd height
-        let mut m = Map::create_map(4, 3);
+        let mut m = MapGenerator::default().create_map(4, 3);
         assert_eq!(&TileOwner::LeftFlank, m.get_tile(0, 0).unwrap().get_owner());
         assert_eq!(&TileOwner::Attacker, m.get_tile(0, 1).unwrap().get_owner());
         assert_eq!(&TileOwner::Attacker, m.get_tile(0, 2).unwrap().get_owner());
@@ -556,7 +595,7 @@ mod tests{
         assert_eq!(&TileOwner::RightFlank, m.get_tile(2, 3).unwrap().get_owner());
         
         // odd width, even height
-        let mut m = Map::create_map(5, 2);
+        let mut m = MapGenerator::default().create_map(5, 2);
         assert_eq!(&TileOwner::LeftFlank, m.get_tile(0, 0).unwrap().get_owner());
         assert_eq!(&TileOwner::Attacker, m.get_tile(0, 1).unwrap().get_owner());
         assert_eq!(&TileOwner::Attacker, m.get_tile(0, 2).unwrap().get_owner());
@@ -569,7 +608,7 @@ mod tests{
         assert_eq!(&TileOwner::RightFlank, m.get_tile(1, 4).unwrap().get_owner());
 
         // odd width, odd height
-        let mut m = Map::create_map(5, 3);
+        let mut m = MapGenerator::default().create_map(5, 3);
         assert_eq!(&TileOwner::LeftFlank, m.get_tile(0, 0).unwrap().get_owner());
         assert_eq!(&TileOwner::Attacker, m.get_tile(0, 1).unwrap().get_owner());
         assert_eq!(&TileOwner::Attacker, m.get_tile(0, 2).unwrap().get_owner());
