@@ -22,15 +22,15 @@ mod map_tiles{
         SplitAttDef
     }
 
-    impl TileOwner {
+    impl MapPrint for TileOwner {
     
-        pub fn to_console_string(&self) -> String{
-            String::from(match &self{
-                Defender => "D",
-                Attacker => "A",
-                LeftFlank => "L",
-                RightFlank => "R",
-                SplitAttDef => "S"
+        fn map_print(&self) -> String{
+            String::from(match self {
+                TileOwner::Defender => "D",
+                TileOwner::Attacker => "A",
+                TileOwner::LeftFlank => "L",
+                TileOwner::RightFlank => "R",
+                TileOwner::SplitAttDef => "S"
             })
         }
     }
@@ -38,22 +38,26 @@ mod map_tiles{
     /// Campaign Tiles from which the battle map will be generated
     /// Left and right flank tiles are taken from the attacker's perspective
     pub struct CampaignGenerationTiles{
-        attacker_tile: CampaignMapTileType,
-        defender_tile: CampaignMapTileType,
-        left_flank_tile: CampaignMapTileType,
-        right_flank_tile: CampaignMapTileType
+        attacker: CampaignMapTileType,
+        defender: CampaignMapTileType,
+        left_flank: CampaignMapTileType,
+        right_flank: CampaignMapTileType
     }
 
     impl CampaignGenerationTiles{
-        pub fn new(attacker_tile: CampaignMapTileType, defender_tile: CampaignMapTileType,
-             left_flank_tile: CampaignMapTileType, right_flank_tile: CampaignMapTileType) -> Self{
+        pub fn new(attacker: CampaignMapTileType, defender: CampaignMapTileType,
+             left_flank: CampaignMapTileType, right_flank: CampaignMapTileType) -> Self{
                 CampaignGenerationTiles{
-                    attacker_tile,
-                    defender_tile,
-                    left_flank_tile,
-                    right_flank_tile
+                    attacker,
+                    defender,
+                    left_flank,
+                    right_flank
                 }
         }
+    }
+
+    pub trait MapPrint{
+        fn map_print(&self) -> String;
     }
 
     // TODO add any missing tile types that are in the base game
@@ -70,9 +74,9 @@ mod map_tiles{
         Town,
     }
 
-    impl BattleMapTileType{
-        pub fn to_console_string(&self) -> String{
-            String::from(match &self{
+    impl MapPrint for BattleMapTileType{
+        fn map_print(&self) -> String{
+            String::from(match self{
                 BattleMapTileType::Forest => "F",
                 BattleMapTileType::Hill => "H",
                 BattleMapTileType::Mountain => "M",
@@ -86,20 +90,20 @@ mod map_tiles{
         }
     }
 
-    enum RoadTileType{
-        Straight, // has 3 rotations
-        Turn120, // has 6 rotations
-        BranchY, // has 2 rotations
-        Branch120, // has 6 rotations
-    }
+    // enum RoadTileType{
+    //     Straight, // has 3 rotations
+    //     Turn120, // has 6 rotations
+    //     BranchY, // has 2 rotations
+    //     Branch120, // has 6 rotations
+    // }
 
-    enum RiverTileType{
-        Straight, // has 3 rotations
-        Turn120, // has 6 rotations
-        BranchY, // has 2 rotations
-        Branch120, // has 6 rotations
-        Lake, // has 6 rotations
-    }
+    // enum RiverTileType{
+    //     Straight, // has 3 rotations
+    //     Turn120, // has 6 rotations
+    //     BranchY, // has 2 rotations
+    //     Branch120, // has 6 rotations
+    //     Lake, // has 6 rotations
+    // }
 
     // enum AddOn{
     //     Barricade,
@@ -131,12 +135,16 @@ mod map_tiles{
             Self { t_type, owner: TileOwner::Attacker }
         }
 
-        pub fn to_console_string(&self) -> String{
-            self.t_type.to_console_string()
+        pub fn tile_type_string(&self) -> String{
+            self.t_type.map_print()
         }
 
-        pub fn to_owner_string(&self) -> String{
-            self.owner.to_console_string()
+        pub fn tile_owner_string(&self) -> String{
+            self.owner.map_print()
+        }
+
+        pub fn set_owner(&mut self, owner: TileOwner){
+            self.owner = owner;
         }
     }
 
@@ -145,7 +153,7 @@ mod map_tiles{
 
 pub mod battle_map{
 
-    use crate::map_tiles::{CampaignMapTileType, MapTile, CampaignGenerationTiles};
+    use crate::map_tiles::{CampaignMapTileType, MapTile, CampaignGenerationTiles, TileOwner};
     
     pub struct TileNeighbors<'a>{
         tile_location: (usize, usize),
@@ -235,10 +243,13 @@ pub mod battle_map{
 
         // TODO: add parameters to initialize MapTiles
         pub fn create_map(board_width: usize, board_height: usize) -> Self{
-            Map { 
+            let mut m = Map { 
                 tiles: Map::create_empty_board(board_width, board_height), 
                 board_height, board_width
-             }
+             };
+
+             m.set_tile_owners();
+             m
         }
 
         /// Create an empty board based on the widths and heights passed
@@ -251,8 +262,55 @@ pub mod battle_map{
             
         }
 
+        fn set_tile_owners(&mut self){
+            let flank_width = self.board_width / 4;
+            let vertical_owner_depth = self.board_height / 2;
+            
+            // set flank owners
+            for v in self.tiles.iter_mut(){
+                for t in v.iter_mut().take(flank_width){
+                    t.set_owner(TileOwner::LeftFlank);
+                }
+
+                for t in v.iter_mut().skip(self.board_width - flank_width){
+                    t.set_owner(TileOwner::RightFlank);
+                }
+            }
+
+            // set attacker owners
+            for v in self.tiles.iter_mut().take(vertical_owner_depth){
+                for t in v.iter_mut().skip(flank_width).take(self.board_width - (2 * flank_width)){
+                    t.set_owner(TileOwner::Attacker);
+                }
+            }
+
+            // set defender owners
+            for v in self.tiles.iter_mut().skip(self.board_height - vertical_owner_depth){
+                for t in v.iter_mut().skip(flank_width).take(self.board_width - (2 * flank_width)){
+                    t.set_owner(TileOwner::Defender);
+                }
+            }
+
+            // set split owners if odd height
+            if self.board_height % 2 == 1{
+                for t in  self.tiles[vertical_owner_depth].iter_mut().skip(flank_width).take(self.board_width - (2 * flank_width)){
+                    t.set_owner(TileOwner::SplitAttDef);
+                }
+            }
+
+
+        }
+
+        pub fn print_board_tiles(&self){
+            self.print_board(&self.tiles.iter().map(|v| v.iter().map(|i| i.tile_type_string()).collect::<Vec<String>>()).collect::<Vec<Vec<String>>>())
+        }
+
+        pub fn print_board_owners(&self){
+            self.print_board(&self.tiles.iter().map(|v| v.iter().map(|i| i.tile_owner_string()).collect::<Vec<String>>()).collect::<Vec<Vec<String>>>())
+        }
+
         /// Print board to console
-        pub fn print_board(&self){
+        fn print_board(&self, tile_abbrs: &Vec<Vec<String>>){
             // use /,\,_,| to create board
             println!("Board: {}w x {}h", self.board_width, self.board_height);
 
@@ -268,7 +326,7 @@ pub mod battle_map{
                 // print even row
                 for i in 0..self.board_width{
                     assert!(j % 2 == 0);
-                    print!("| {} ", self.tiles[j][i].to_console_string());
+                    print!("| {} ", tile_abbrs[j][i]);
                 }
                 println!("|");
                 j += 1;
@@ -287,7 +345,7 @@ pub mod battle_map{
                 assert!(j % 2 == 1);
                 print!(" ");
                 for i in 0..self.board_width{ // odd row
-                    print!(" | {}", self.tiles[j][i].to_console_string())
+                    print!(" | {}", tile_abbrs[j][i])
                 }
      
                 println!(" |");
@@ -402,7 +460,7 @@ mod tests{
         for i in 4..=10{
             for j in 2..=10{
                 let m = Map::create_map(i,j);
-                m.print_board();
+                m.print_board_tiles();
             }
         }
     }
