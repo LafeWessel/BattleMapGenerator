@@ -21,3 +21,12 @@ How should this be done?
     1. Add other?
 - Create and save image
 - Print results
+
+### Thoughts
+
+- Should take proximity to nearest city to determine how many towns should be placed
+- Need to determine which input tiles have roads to determine which edges should have exit roads
+- Need to determine whic input tiles have rivers to determine which edges should have exit rivers
+- Should take proximity to nearest river to determine if any streams should be present
+- Need to calculate how hilly/mountainous the terrain should be
+- Need to figure out how much a certain owned section should be like its campaign tile
