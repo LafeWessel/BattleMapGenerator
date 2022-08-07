@@ -44,23 +44,27 @@ mod map_tiles{
         defender: CampaignMapTileType,
         left_flank: CampaignMapTileType,
         right_flank: CampaignMapTileType,
-        cities_within_5: u32, // for calculating population density
-        rivers_within_5: u32, // for calculating any streams
-        mountains_within_5: u32, // for calculating terrain roughness
+        cities_within_search_radius: u32, // for calculating population density
+        rivers_within_search_radius: u32, // for calculating any streams
+        mountains_within_search_radius: u32, // for calculating terrain roughness
+        hills_within_search_radius: u32, // for calculating terrain roughness
+        search_radius: u32,
     }
 
     impl CampaignGenerationTiles{
         pub fn new(attacker: CampaignMapTileType, defender: CampaignMapTileType,
              left_flank: CampaignMapTileType, right_flank: CampaignMapTileType,
-            cities: u32, rivers: u32, mountains: u32) -> Self{
+            cities: u32, rivers: u32, mountains: u32, hills: u32, search_radius: u32) -> Self{
                 CampaignGenerationTiles{
                     attacker,
                     defender,
                     left_flank,
                     right_flank,
-                    cities_within_5: cities,
-                    rivers_within_5: rivers,
-                    mountains_within_5: mountains
+                    cities_within_search_radius: cities,
+                    rivers_within_search_radius: rivers,
+                    mountains_within_search_radius: mountains,
+                    hills_within_search_radius: hills,
+                    search_radius
                 }
         }
 
@@ -70,10 +74,38 @@ mod map_tiles{
                 defender: CampaignMapTileType::Plains,
                 left_flank: CampaignMapTileType::Plains,
                 right_flank: CampaignMapTileType::Plains,
-                cities_within_5: 0,
-                rivers_within_5: 0,
-                mountains_within_5: 0
+                cities_within_search_radius: 0,
+                rivers_within_search_radius: 0,
+                mountains_within_search_radius: 0,
+                hills_within_search_radius: 0,
+                search_radius: 1
             }
+        }
+
+        /// Calculate the number of hexes within the given radius
+        fn radius_search_size(radius: u32) -> u32{
+            // formula is 3r^2 + 3r + 1
+            3 * (radius * radius) + 3 * radius + 1
+        }
+
+        /// number of cities / search area
+        pub fn city_density(&self) -> f64{
+            self.cities_within_search_radius as f64 / CampaignGenerationTiles::radius_search_size(self.search_radius) as f64
+        }
+
+        /// number of cities / search area
+        pub fn river_density(&self) -> f64{
+            self.rivers_within_search_radius as f64 / CampaignGenerationTiles::radius_search_size(self.search_radius) as f64
+        }
+
+        /// number of cities / search area
+        pub fn mountain_density(&self) -> f64{
+            self.mountains_within_search_radius as f64 / CampaignGenerationTiles::radius_search_size(self.search_radius) as f64
+        }
+
+        /// number of cities / search area
+        pub fn hill_density(&self) -> f64{
+            self.hills_within_search_radius as f64 / CampaignGenerationTiles::radius_search_size(self.search_radius) as f64
         }
     }
 
@@ -289,8 +321,16 @@ pub mod battle_map{
             
         }
 
-        pub fn generate_map(){
+        pub fn generate_map_tiles(&self, map: &mut Map){
+            // determine ratio for population -> town placement
 
+            // determine ratio for rivers -> adding river tiles
+
+            // determine ratio for mountains -> adding hills & mountains
+
+            // determine which edges any roads should enter/exit on -> WFC?
+
+            // determine which edges any rivers should enter/exit on -> WFC?
         }
 
 
@@ -624,8 +664,5 @@ mod tests{
         assert_eq!(&TileOwner::Defender, m.get_tile(2, 2).unwrap().get_owner());
         assert_eq!(&TileOwner::Defender, m.get_tile(2, 3).unwrap().get_owner());
         assert_eq!(&TileOwner::RightFlank, m.get_tile(2, 4).unwrap().get_owner());
-
-
-
     }
 }

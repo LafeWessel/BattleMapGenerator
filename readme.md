@@ -30,3 +30,11 @@ How should this be done?
 - Should take proximity to nearest river to determine if any streams should be present
 - Need to calculate how hilly/mountainous the terrain should be
 - Need to figure out how much a certain owned section should be like its campaign tile
+
+### Notes
+
+
+- Formula for finding total hexes within radius of a hex is
+ ``` math
+ 3r^2 + 3r + 1
+ ```
