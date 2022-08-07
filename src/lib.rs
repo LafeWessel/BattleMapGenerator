@@ -1,5 +1,7 @@
 
 mod map_tiles{
+    use colored::{Colorize, ColoredString};
+
 
     pub enum CampaignMapTileType{
         Forest,
@@ -24,14 +26,14 @@ mod map_tiles{
 
     impl MapPrint for TileOwner {
     
-        fn map_print(&self) -> String{
-            String::from(match self {
-                TileOwner::Defender => "D",
-                TileOwner::Attacker => "A",
-                TileOwner::LeftFlank => "L",
-                TileOwner::RightFlank => "R",
-                TileOwner::SplitAttDef => "S"
-            })
+        fn map_print(&self) -> ColoredString{
+            match self {
+                TileOwner::Defender => String::from("D").cyan(),
+                TileOwner::Attacker => String::from("A").red(),
+                TileOwner::LeftFlank => String::from("L").purple().on_white(),
+                TileOwner::RightFlank => String::from("R").blue().on_white(),
+                TileOwner::SplitAttDef => String::from("S").yellow().on_black()
+            }
         }
     }
 
@@ -57,7 +59,7 @@ mod map_tiles{
     }
 
     pub trait MapPrint{
-        fn map_print(&self) -> String;
+        fn map_print(&self) -> ColoredString;
     }
 
     // TODO add any missing tile types that are in the base game
@@ -75,18 +77,18 @@ mod map_tiles{
     }
 
     impl MapPrint for BattleMapTileType{
-        fn map_print(&self) -> String{
-            String::from(match self{
-                BattleMapTileType::Forest => "F",
-                BattleMapTileType::Hill => "H",
-                BattleMapTileType::Mountain => "M",
-                BattleMapTileType::Outpost => "O",
-                BattleMapTileType::Plains => "P",
-                BattleMapTileType::River => "R",
-                BattleMapTileType::Road => "V",
-                BattleMapTileType::Swamp => "S",
-                BattleMapTileType::Town => "T",
-            })
+        fn map_print(&self) -> ColoredString{
+            match self{
+                BattleMapTileType::Forest => String::from("F").green(),
+                BattleMapTileType::Hill => String::from("H").yellow(),
+                BattleMapTileType::Mountain => String::from("M").magenta(),
+                BattleMapTileType::Outpost => String::from("O").black().on_white(),
+                BattleMapTileType::Plains => String::from("P").blue(),
+                BattleMapTileType::River => String::from("R").cyan(),
+                BattleMapTileType::Road => String::from("V").black().on_white(),
+                BattleMapTileType::Swamp => String::from("S").yellow(),
+                BattleMapTileType::Town => String::from("T").black().on_white(),
+            }
         }
     }
 
@@ -135,17 +137,26 @@ mod map_tiles{
             Self { t_type, owner: TileOwner::Attacker }
         }
 
-        pub fn tile_type_string(&self) -> String{
+        pub fn tile_type_string(&self) -> ColoredString{
             self.t_type.map_print()
         }
 
-        pub fn tile_owner_string(&self) -> String{
+        pub fn tile_owner_string(&self) -> ColoredString{
             self.owner.map_print()
         }
 
         pub fn set_owner(&mut self, owner: TileOwner){
             self.owner = owner;
         }
+
+        pub fn get_owner(&self) -> &TileOwner{
+            &self.owner
+        }
+
+        pub fn get_type(&self) -> &BattleMapTileType{
+            &self.t_type
+        }
+
     }
 
 }
@@ -154,6 +165,7 @@ mod map_tiles{
 pub mod battle_map{
 
     use crate::map_tiles::{CampaignMapTileType, MapTile, CampaignGenerationTiles, TileOwner};
+    use colored::ColoredString;
     
     pub struct TileNeighbors<'a>{
         tile_location: (usize, usize),
@@ -302,15 +314,15 @@ pub mod battle_map{
         }
 
         pub fn print_board_tiles(&self){
-            self.print_board(&self.tiles.iter().map(|v| v.iter().map(|i| i.tile_type_string()).collect::<Vec<String>>()).collect::<Vec<Vec<String>>>())
+            self.print_board(&self.tiles.iter().map(|v| v.iter().map(|i| i.tile_type_string()).collect()).collect())
         }
 
         pub fn print_board_owners(&self){
-            self.print_board(&self.tiles.iter().map(|v| v.iter().map(|i| i.tile_owner_string()).collect::<Vec<String>>()).collect::<Vec<Vec<String>>>())
+            self.print_board(&self.tiles.iter().map(|v| v.iter().map(|i| i.tile_owner_string()).collect()).collect())
         }
 
         /// Print board to console
-        fn print_board(&self, tile_abbrs: &Vec<Vec<String>>){
+        fn print_board(&self, tile_abbrs: &Vec<Vec<ColoredString>>){
             // use /,\,_,| to create board
             println!("Board: {}w x {}h", self.board_width, self.board_height);
 
@@ -429,7 +441,7 @@ pub mod battle_map{
         }
 
         /// Get a reference to a tile from the board
-        fn get_tile(&self, row: usize, column: usize) -> Option<&MapTile>{
+        pub fn get_tile(&self, row: usize, column: usize) -> Option<&MapTile>{
             match self.tiles.get(row){
                 Some(v) => {
                     v.get(column)
@@ -486,29 +498,29 @@ mod tests{
 
         // Assert
         assert_eq!(neighbors_0_0.get_tile_location(), (0,0));
-        assert_eq!(neighbors_0_0.tile_type(), &MapTile::new(BattleMapTileType::Plains));
+        assert_eq!(neighbors_0_0.tile_type().get_type(), &BattleMapTileType::Plains);
         assert_eq!(neighbors_0_0.get_left(), None);
         assert_eq!(neighbors_0_0.get_upper_left(), None);
         assert_eq!(neighbors_0_0.get_upper_right(), None);
-        assert_eq!(neighbors_0_0.get_right(), Some(&MapTile::new(BattleMapTileType::Forest)));
-        assert_eq!(neighbors_0_0.get_lower_right(), Some(&MapTile::new(BattleMapTileType::Mountain)));
+        assert_eq!(neighbors_0_0.get_right().unwrap().get_type(), &BattleMapTileType::Forest);
+        assert_eq!(neighbors_0_0.get_lower_right().unwrap().get_type(), &BattleMapTileType::Mountain);
         assert_eq!(neighbors_0_0.get_lower_left(), None);
         
         assert_eq!(neighbors_1_1.get_tile_location(), (1,1));
-        assert_eq!(neighbors_1_1.tile_type(), &MapTile::new(BattleMapTileType::Outpost));
-        assert_eq!(neighbors_1_1.get_left(), Some(&MapTile::new(BattleMapTileType::Mountain)));
-        assert_eq!(neighbors_1_1.get_upper_left(), Some(&MapTile::new(BattleMapTileType::Forest)));
-        assert_eq!(neighbors_1_1.get_upper_right(), Some(&MapTile::new(BattleMapTileType::Hill)));
-        assert_eq!(neighbors_1_1.get_right(), Some(&MapTile::new(BattleMapTileType::Plains)));
-        assert_eq!(neighbors_1_1.get_lower_right(), Some(&MapTile::new(BattleMapTileType::Town)));
-        assert_eq!(neighbors_1_1.get_lower_left(), Some(&MapTile::new(BattleMapTileType::Swamp)));
+        assert_eq!(neighbors_1_1.tile_type().get_type(), &BattleMapTileType::Outpost);
+        assert_eq!(neighbors_1_1.get_left().unwrap().get_type(), &BattleMapTileType::Mountain);
+        assert_eq!(neighbors_1_1.get_upper_left().unwrap().get_type(), &BattleMapTileType::Forest);
+        assert_eq!(neighbors_1_1.get_upper_right().unwrap().get_type(), &BattleMapTileType::Hill);
+        assert_eq!(neighbors_1_1.get_right().unwrap().get_type(), &BattleMapTileType::Plains);
+        assert_eq!(neighbors_1_1.get_lower_right().unwrap().get_type(), &BattleMapTileType::Town);
+        assert_eq!(neighbors_1_1.get_lower_left().unwrap().get_type(), &BattleMapTileType::Swamp);
         
         assert_eq!(neighbors_2_1.get_tile_location(), (2,1));
-        assert_eq!(neighbors_2_1.tile_type(), &MapTile::new(BattleMapTileType::Swamp));
-        assert_eq!(neighbors_2_1.get_left(), Some(&MapTile::new(BattleMapTileType::Road)));
-        assert_eq!(neighbors_2_1.get_upper_left(), Some(&MapTile::new(BattleMapTileType::Mountain)));
-        assert_eq!(neighbors_2_1.get_upper_right(), Some(&MapTile::new(BattleMapTileType::Outpost)));
-        assert_eq!(neighbors_2_1.get_right(), Some(&MapTile::new(BattleMapTileType::Town)));
+        assert_eq!(neighbors_2_1.tile_type().get_type(), &BattleMapTileType::Swamp);
+        assert_eq!(neighbors_2_1.get_left().unwrap().get_type(), &BattleMapTileType::Road);
+        assert_eq!(neighbors_2_1.get_upper_left().unwrap().get_type(), &BattleMapTileType::Mountain);
+        assert_eq!(neighbors_2_1.get_upper_right().unwrap().get_type(), &BattleMapTileType::Outpost);
+        assert_eq!(neighbors_2_1.get_right().unwrap().get_type(), &BattleMapTileType::Town);
         assert_eq!(neighbors_2_1.get_lower_right(), None);
         assert_eq!(neighbors_2_1.get_lower_left(), None);
     }
@@ -516,6 +528,65 @@ mod tests{
 
     #[test]
     fn tile_owners(){
+
+        // even width, even height
+        let mut m = Map::create_map(4, 2);
+        assert_eq!(&TileOwner::LeftFlank, m.get_tile(0, 0).unwrap().get_owner());
+        assert_eq!(&TileOwner::Attacker, m.get_tile(0, 1).unwrap().get_owner());
+        assert_eq!(&TileOwner::Attacker, m.get_tile(0, 2).unwrap().get_owner());
+        assert_eq!(&TileOwner::RightFlank, m.get_tile(0, 3).unwrap().get_owner());
+        assert_eq!(&TileOwner::LeftFlank, m.get_tile(1, 0).unwrap().get_owner());
+        assert_eq!(&TileOwner::Defender, m.get_tile(1, 1).unwrap().get_owner());
+        assert_eq!(&TileOwner::Defender, m.get_tile(1, 2).unwrap().get_owner());
+        assert_eq!(&TileOwner::RightFlank, m.get_tile(1, 3).unwrap().get_owner());
+
+        // even width, odd height
+        let mut m = Map::create_map(4, 3);
+        assert_eq!(&TileOwner::LeftFlank, m.get_tile(0, 0).unwrap().get_owner());
+        assert_eq!(&TileOwner::Attacker, m.get_tile(0, 1).unwrap().get_owner());
+        assert_eq!(&TileOwner::Attacker, m.get_tile(0, 2).unwrap().get_owner());
+        assert_eq!(&TileOwner::RightFlank, m.get_tile(0, 3).unwrap().get_owner());
+        assert_eq!(&TileOwner::LeftFlank, m.get_tile(1, 0).unwrap().get_owner());
+        assert_eq!(&TileOwner::SplitAttDef, m.get_tile(1, 1).unwrap().get_owner());
+        assert_eq!(&TileOwner::SplitAttDef, m.get_tile(1, 2).unwrap().get_owner());
+        assert_eq!(&TileOwner::RightFlank, m.get_tile(1, 3).unwrap().get_owner());
+        assert_eq!(&TileOwner::LeftFlank, m.get_tile(2, 0).unwrap().get_owner());
+        assert_eq!(&TileOwner::Defender, m.get_tile(2, 1).unwrap().get_owner());
+        assert_eq!(&TileOwner::Defender, m.get_tile(2, 2).unwrap().get_owner());
+        assert_eq!(&TileOwner::RightFlank, m.get_tile(2, 3).unwrap().get_owner());
+        
+        // odd width, even height
+        let mut m = Map::create_map(5, 2);
+        assert_eq!(&TileOwner::LeftFlank, m.get_tile(0, 0).unwrap().get_owner());
+        assert_eq!(&TileOwner::Attacker, m.get_tile(0, 1).unwrap().get_owner());
+        assert_eq!(&TileOwner::Attacker, m.get_tile(0, 2).unwrap().get_owner());
+        assert_eq!(&TileOwner::Attacker, m.get_tile(0, 3).unwrap().get_owner());
+        assert_eq!(&TileOwner::RightFlank, m.get_tile(0, 4).unwrap().get_owner());
+        assert_eq!(&TileOwner::LeftFlank, m.get_tile(1, 0).unwrap().get_owner());
+        assert_eq!(&TileOwner::Defender, m.get_tile(1, 1).unwrap().get_owner());
+        assert_eq!(&TileOwner::Defender, m.get_tile(1, 2).unwrap().get_owner());
+        assert_eq!(&TileOwner::Defender, m.get_tile(1, 3).unwrap().get_owner());
+        assert_eq!(&TileOwner::RightFlank, m.get_tile(1, 4).unwrap().get_owner());
+
+        // odd width, odd height
+        let mut m = Map::create_map(5, 3);
+        assert_eq!(&TileOwner::LeftFlank, m.get_tile(0, 0).unwrap().get_owner());
+        assert_eq!(&TileOwner::Attacker, m.get_tile(0, 1).unwrap().get_owner());
+        assert_eq!(&TileOwner::Attacker, m.get_tile(0, 2).unwrap().get_owner());
+        assert_eq!(&TileOwner::Attacker, m.get_tile(0, 3).unwrap().get_owner());
+        assert_eq!(&TileOwner::RightFlank, m.get_tile(0, 4).unwrap().get_owner());
+        assert_eq!(&TileOwner::LeftFlank, m.get_tile(1, 0).unwrap().get_owner());
+        assert_eq!(&TileOwner::SplitAttDef, m.get_tile(1, 1).unwrap().get_owner());
+        assert_eq!(&TileOwner::SplitAttDef, m.get_tile(1, 2).unwrap().get_owner());
+        assert_eq!(&TileOwner::SplitAttDef, m.get_tile(1, 3).unwrap().get_owner());
+        assert_eq!(&TileOwner::RightFlank, m.get_tile(1, 4).unwrap().get_owner());
+        assert_eq!(&TileOwner::LeftFlank, m.get_tile(2, 0).unwrap().get_owner());
+        assert_eq!(&TileOwner::Defender, m.get_tile(2, 1).unwrap().get_owner());
+        assert_eq!(&TileOwner::Defender, m.get_tile(2, 2).unwrap().get_owner());
+        assert_eq!(&TileOwner::Defender, m.get_tile(2, 3).unwrap().get_owner());
+        assert_eq!(&TileOwner::RightFlank, m.get_tile(2, 4).unwrap().get_owner());
+
+
 
     }
 }
