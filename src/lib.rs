@@ -323,10 +323,16 @@ pub mod battle_map{
 
         pub fn generate_map_tiles(&self, map: &mut Map){
             // determine ratio for population -> town placement
+            let pop_ratio = self.base_tiles.city_density();
 
             // determine ratio for rivers -> adding river tiles
+            let river_ratio = self.base_tiles.river_density();
 
-            // determine ratio for mountains -> adding hills & mountains
+            // determine ratio for mountains -> adding mountains
+            let mtn_ratio = self.base_tiles.mountain_density();
+
+            // determine ratio for hills -> adding hills
+            let hill_ratio = self.base_tiles.hill_density();
 
             // determine which edges any roads should enter/exit on -> WFC?
 
