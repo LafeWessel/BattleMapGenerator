@@ -239,8 +239,9 @@ mod map_tiles{
 
 pub mod battle_map{
 
-    use crate::map_tiles::{CampaignMapTileType, MapTile, CampaignGenerationTiles, TileOwner};
+    use crate::map_tiles::{CampaignMapTileType, MapTile, CampaignGenerationTiles, TileOwner, BattleMapTileType};
     use colored::ColoredString;
+    use rand::thread_rng;
     
     pub struct TileNeighbors<'a>{
         tile_location: (usize, usize),
@@ -353,20 +354,43 @@ pub mod battle_map{
             let town_ct: u32 = (self.base_tiles.city_density() * total_tiles as f64) as u32;
 
             // determine river count
-            let river_ratio: u32 = (self.base_tiles.river_density() * total_tiles as f64) as u32;
+            let river_ct: u32 = (self.base_tiles.river_density() * total_tiles as f64) as u32;
 
             // determine mountain count
-            let mtn_ratio: u32 = (self.base_tiles.mountain_density() * total_tiles as f64) as u32;
+            let mtn_ct: u32 = (self.base_tiles.mountain_density() * total_tiles as f64) as u32;
 
             // determine hill count
-            let hill_ratio: u32 = (self.base_tiles.hill_density() * total_tiles as f64) as u32;
+            let hill_ct: u32 = (self.base_tiles.hill_density() * total_tiles as f64) as u32;
 
             // determine which edges any roads should enter/exit on -> WFC?
 
             // determine which edges any rivers should enter/exit on -> WFC?
 
+
+            // TODO add better terrain generation
+            // randomly place the town, river, mtn, hill tiles
+            let mut rng = thread_rng();
+            let mut default_tiles: Vec<(usize, usize)> = (0..map.board_height).into_iter().map(|w| (0..map.board_width).into_iter().map(|h| (w,h)).collect::<Vec<(usize, usize)>>()).flatten().collect();
+            for _ in 0..hill_ct{
+                
+            }
+            for _ in 0..town_ct{
+
+            }
+            for _ in 0..mtn_ct{
+
+            }
+            for _ in 0..river_ct{
+
+            }
+
+
         }
 
+        /// finds a random tile on the map that is the Default type, panics if there are none
+        fn find_default_tile(map: &Map, default_tiles: &Vec<(usize, usize)>) -> (usize, usize){
+            (0, 0)
+        }
 
         fn set_tile_owners(&self, map: &mut Map){
             let flank_width = map.board_width / 4;
@@ -422,10 +446,6 @@ pub mod battle_map{
     }
 
     impl Map{
-
-
-
-
         pub fn print_board_tiles(&self){
             self.print_board(&self.tiles.iter().map(|v| v.iter().map(|i| i.tile_type_string()).collect()).collect())
         }
