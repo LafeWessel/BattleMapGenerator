@@ -644,7 +644,7 @@ mod tests{
         assert_eq!(neighbors_1_1.get_left().unwrap().get_type(), &BattleMapTileType::Mountain);
         assert_eq!(neighbors_1_1.get_upper_left().unwrap().get_type(), &BattleMapTileType::Forest);
         assert_eq!(neighbors_1_1.get_upper_right().unwrap().get_type(), &BattleMapTileType::Hill);
-        assert_eq!(neighbors_1_1.get_right().unwrap().get_type(), &BattleMapTileType::Plains);
+        assert_eq!(neighbors_1_1.get_right().unwrap().get_type(), &BattleMapTileType::Default);
         assert_eq!(neighbors_1_1.get_lower_right().unwrap().get_type(), &BattleMapTileType::Town);
         assert_eq!(neighbors_1_1.get_lower_left().unwrap().get_type(), &BattleMapTileType::Swamp);
         
