@@ -13,6 +13,28 @@ mod map_tiles{
         Road,
         Swamp,
         Town,
+        Default
+    }
+
+    pub enum CampaignMapTileAddOn{
+        Road,
+        River,
+        RiverFord,
+        RiverBridge
+    }
+
+    pub struct CampaignMapTile{
+        tile: CampaignMapTileType,
+        add_on: Option<CampaignMapTileAddOn>,
+    }
+
+    impl CampaignMapTile{
+        pub fn default() -> Self{
+            CampaignMapTile { 
+                tile: CampaignMapTileType::Default, 
+                add_on: Option::None 
+            }
+        }
     }
 
     #[derive(Clone, PartialEq, Eq, Debug)]
@@ -40,10 +62,10 @@ mod map_tiles{
     /// Campaign Tiles from which the battle map will be generated
     /// Left and right flank tiles are taken from the defender's perspective
     pub struct CampaignGenerationTiles{
-        attacker: CampaignMapTileType,
-        defender: CampaignMapTileType,
-        left_flank: CampaignMapTileType,
-        right_flank: CampaignMapTileType,
+        attacker: CampaignMapTile,
+        defender: CampaignMapTile,
+        left_flank: CampaignMapTile,
+        right_flank: CampaignMapTile,
         cities_within_search_radius: u32, // for calculating population density
         rivers_within_search_radius: u32, // for calculating any streams
         mountains_within_search_radius: u32, // for calculating terrain roughness
@@ -52,8 +74,8 @@ mod map_tiles{
     }
 
     impl CampaignGenerationTiles{
-        pub fn new(attacker: CampaignMapTileType, defender: CampaignMapTileType,
-             left_flank: CampaignMapTileType, right_flank: CampaignMapTileType,
+        pub fn new(attacker: CampaignMapTile, defender: CampaignMapTile,
+             left_flank: CampaignMapTile, right_flank: CampaignMapTile,
             cities: u32, rivers: u32, mountains: u32, hills: u32, search_radius: u32) -> Self{
                 CampaignGenerationTiles{
                     attacker,
@@ -70,10 +92,10 @@ mod map_tiles{
 
         pub fn default() -> Self{
             CampaignGenerationTiles { 
-                attacker: CampaignMapTileType::Plains,
-                defender: CampaignMapTileType::Plains,
-                left_flank: CampaignMapTileType::Plains,
-                right_flank: CampaignMapTileType::Plains,
+                attacker: CampaignMapTile::default(),
+                defender: CampaignMapTile::default(),
+                left_flank: CampaignMapTile::default(),
+                right_flank: CampaignMapTile::default(),
                 cities_within_search_radius: 0,
                 rivers_within_search_radius: 0,
                 mountains_within_search_radius: 0,
@@ -125,6 +147,7 @@ mod map_tiles{
         Road,
         Swamp,
         Town,
+        Default,
     }
 
     impl MapPrint for BattleMapTileType{
@@ -139,6 +162,7 @@ mod map_tiles{
                 BattleMapTileType::Road => String::from("V").black().on_white(),
                 BattleMapTileType::Swamp => String::from("S").yellow(),
                 BattleMapTileType::Town => String::from("T").black().on_white(),
+                BattleMapTileType::Default => String::from("D").white(),
             }
         }
     }
@@ -179,7 +203,7 @@ mod map_tiles{
     impl MapTile{
         pub fn default() -> Self{
             Self { 
-                t_type: BattleMapTileType::Plains,
+                t_type: BattleMapTileType::Default,
                 owner: TileOwner::Attacker
              }
         }
@@ -308,6 +332,7 @@ pub mod battle_map{
                 };
 
                 self.set_tile_owners(&mut m);
+                self.generate_map_tiles(&mut m);
                 m
         }
 
@@ -318,25 +343,28 @@ pub mod battle_map{
             assert!(height >= 2, "Must be at least 2 high");
 
             vec![vec![MapTile::default(); width]; height]
-            
         }
 
-        pub fn generate_map_tiles(&self, map: &mut Map){
-            // determine ratio for population -> town placement
-            let pop_ratio = self.base_tiles.city_density();
+        fn generate_map_tiles(&self, map: &mut Map){
+            // calculate total tiles
+            let total_tiles: u32 = map.board_height as u32 * map.board_width as u32;
 
-            // determine ratio for rivers -> adding river tiles
-            let river_ratio = self.base_tiles.river_density();
+            // determine town count
+            let town_ct: u32 = (self.base_tiles.city_density() * total_tiles as f64) as u32;
 
-            // determine ratio for mountains -> adding mountains
-            let mtn_ratio = self.base_tiles.mountain_density();
+            // determine river count
+            let river_ratio: u32 = (self.base_tiles.river_density() * total_tiles as f64) as u32;
 
-            // determine ratio for hills -> adding hills
-            let hill_ratio = self.base_tiles.hill_density();
+            // determine mountain count
+            let mtn_ratio: u32 = (self.base_tiles.mountain_density() * total_tiles as f64) as u32;
+
+            // determine hill count
+            let hill_ratio: u32 = (self.base_tiles.hill_density() * total_tiles as f64) as u32;
 
             // determine which edges any roads should enter/exit on -> WFC?
 
             // determine which edges any rivers should enter/exit on -> WFC?
+
         }
 
 
