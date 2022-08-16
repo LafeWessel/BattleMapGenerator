@@ -1,5 +1,5 @@
 
-mod map_tiles{
+pub mod map_tiles{
     use colored::{Colorize, ColoredString};
 
 
@@ -241,7 +241,7 @@ pub mod battle_map{
 
     use crate::map_tiles::{CampaignMapTileType, MapTile, CampaignGenerationTiles, TileOwner, BattleMapTileType};
     use colored::ColoredString;
-    use rand::thread_rng;
+    use rand::{thread_rng, Rng};
     
     pub struct TileNeighbors<'a>{
         tile_location: (usize, usize),
@@ -302,7 +302,7 @@ pub mod battle_map{
     }
 
     pub struct MapGenerator{
-        base_tiles: CampaignGenerationTiles
+        base_tiles: CampaignGenerationTiles,
     }
 
     impl MapGenerator
@@ -369,28 +369,36 @@ pub mod battle_map{
 
             // TODO add better terrain generation
             // randomly place the town, river, mtn, hill tiles
-            let mut rng = thread_rng();
             let mut default_tiles: Vec<(usize, usize)> = (0..map.board_height).into_iter().map(|w| (0..map.board_width).into_iter().map(|h| (w,h)).collect::<Vec<(usize, usize)>>()).flatten().collect();
+            let mut gen = rand::thread_rng();
             for _ in 0..hill_ct{
-                
+                let rnd: usize = gen.gen_range((0..default_tiles.len()));
+                map.set_tile(default_tiles[rnd].0, default_tiles[rnd].1, MapTile::new(BattleMapTileType::Hill));
+                default_tiles.remove(rnd);
             }
             for _ in 0..town_ct{
-
+                let rnd: usize = gen.gen_range((0..default_tiles.len()));
+                map.set_tile(default_tiles[rnd].0, default_tiles[rnd].1, MapTile::new(BattleMapTileType::Town));
+                default_tiles.remove(rnd);
             }
             for _ in 0..mtn_ct{
-
+                let rnd: usize = gen.gen_range((0..default_tiles.len()));
+                map.set_tile(default_tiles[rnd].0, default_tiles[rnd].1, MapTile::new(BattleMapTileType::Mountain));
+                default_tiles.remove(rnd);
             }
             for _ in 0..river_ct{
-
+                let rnd: usize = gen.gen_range((0..default_tiles.len()));
+                map.set_tile(default_tiles[rnd].0, default_tiles[rnd].1, MapTile::new(BattleMapTileType::River));
+                default_tiles.remove(rnd);
             }
 
 
         }
 
-        /// finds a random tile on the map that is the Default type, panics if there are none
-        fn find_default_tile(map: &Map, default_tiles: &Vec<(usize, usize)>) -> (usize, usize){
-            (0, 0)
-        }
+        // /// finds a random tile on the map that is the Default type, panics if there are none
+        // fn find_default_tile(map: &Map, default_tiles: &Vec<(usize, usize)>) -> (usize, usize){
+        //     (0, 0)
+        // }
 
         fn set_tile_owners(&self, map: &mut Map){
             let flank_width = map.board_width / 4;
