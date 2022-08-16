@@ -239,9 +239,9 @@ pub mod map_tiles{
 
 pub mod battle_map{
 
-    use crate::map_tiles::{CampaignMapTileType, MapTile, CampaignGenerationTiles, TileOwner, BattleMapTileType};
+    use crate::map_tiles::{MapTile, CampaignGenerationTiles, TileOwner, BattleMapTileType};
     use colored::ColoredString;
-    use rand::{thread_rng, Rng};
+    use rand::{Rng};
     
     pub struct TileNeighbors<'a>{
         tile_location: (usize, usize),
@@ -338,12 +338,12 @@ pub mod battle_map{
         }
 
         /// Create an empty board based on the widths and heights passed
-        fn create_empty_board(&self, width: usize, height: usize) -> Vec<Vec<MapTile>>{
+        fn create_empty_board(&self, width: usize, height: usize) -> Vec<MapTile>{
             // must be at least 2x2
             assert!(width >= 4, "Must be at least 4 wide");
             assert!(height >= 2, "Must be at least 2 high");
 
-            vec![vec![MapTile::default(); width]; height]
+            vec![MapTile::default(); width * height]
         }
 
         fn generate_map_tiles(&self, map: &mut Map){
@@ -372,22 +372,22 @@ pub mod battle_map{
             let mut default_tiles: Vec<(usize, usize)> = (0..map.board_height).into_iter().map(|w| (0..map.board_width).into_iter().map(|h| (w,h)).collect::<Vec<(usize, usize)>>()).flatten().collect();
             let mut gen = rand::thread_rng();
             for _ in 0..hill_ct{
-                let rnd: usize = gen.gen_range((0..default_tiles.len()));
+                let rnd: usize = gen.gen_range(0..default_tiles.len());
                 map.set_tile(default_tiles[rnd].0, default_tiles[rnd].1, MapTile::new(BattleMapTileType::Hill));
                 default_tiles.remove(rnd);
             }
             for _ in 0..town_ct{
-                let rnd: usize = gen.gen_range((0..default_tiles.len()));
+                let rnd: usize = gen.gen_range(0..default_tiles.len());
                 map.set_tile(default_tiles[rnd].0, default_tiles[rnd].1, MapTile::new(BattleMapTileType::Town));
                 default_tiles.remove(rnd);
             }
             for _ in 0..mtn_ct{
-                let rnd: usize = gen.gen_range((0..default_tiles.len()));
+                let rnd: usize = gen.gen_range(0..default_tiles.len());
                 map.set_tile(default_tiles[rnd].0, default_tiles[rnd].1, MapTile::new(BattleMapTileType::Mountain));
                 default_tiles.remove(rnd);
             }
             for _ in 0..river_ct{
-                let rnd: usize = gen.gen_range((0..default_tiles.len()));
+                let rnd: usize = gen.gen_range(0..default_tiles.len());
                 map.set_tile(default_tiles[rnd].0, default_tiles[rnd].1, MapTile::new(BattleMapTileType::River));
                 default_tiles.remove(rnd);
             }
@@ -405,33 +405,33 @@ pub mod battle_map{
             let vertical_owner_depth = map.board_height / 2;
             
             // set flank owners
-            for v in map.tiles.iter_mut(){
-                for t in v.iter_mut().take(flank_width){
+            for v in 0..map.board_height{
+                for t in map.tiles.iter_mut().skip(v * map.board_width).take(flank_width){
                     t.set_owner(TileOwner::LeftFlank);
                 }
 
-                for t in v.iter_mut().skip(map.board_width - flank_width){
+                for t in map.tiles.iter_mut().skip((v + 1) * map.board_width - flank_width).take(flank_width){
                     t.set_owner(TileOwner::RightFlank);
                 }
             }
 
             // set attacker owners
-            for v in map.tiles.iter_mut().take(vertical_owner_depth){
-                for t in v.iter_mut().skip(flank_width).take(map.board_width - (2 * flank_width)){
+            for v in 0..vertical_owner_depth{
+                for t in map.tiles.iter_mut().skip(v * map.board_width + flank_width).take(map.board_width - (2 * flank_width)){
                     t.set_owner(TileOwner::Attacker);
                 }
             }
 
             // set defender owners
-            for v in map.tiles.iter_mut().skip(map.board_height - vertical_owner_depth){
-                for t in v.iter_mut().skip(flank_width).take(map.board_width - (2 * flank_width)){
+            for v in (map.board_height - vertical_owner_depth)..map.board_height{
+                for t in map.tiles.iter_mut().skip(v * map.board_width + flank_width).take(map.board_width - (2 * flank_width)){
                     t.set_owner(TileOwner::Defender);
                 }
             }
 
             // set split owners if odd height
             if map.board_height % 2 == 1{
-                for t in  map.tiles[vertical_owner_depth].iter_mut().skip(flank_width).take(map.board_width - (2 * flank_width)){
+                for t in  map.tiles.iter_mut().skip(vertical_owner_depth * map.board_width + flank_width).take(map.board_width - (2 * flank_width)){
                     t.set_owner(TileOwner::SplitAttDef);
                 }
             }
@@ -448,22 +448,22 @@ pub mod battle_map{
 
 
     pub struct Map{
-        tiles: Vec<Vec<MapTile>>,
+        tiles: Vec<MapTile>,
         board_height: usize,
         board_width: usize,
     }
 
     impl Map{
         pub fn print_board_tiles(&self){
-            self.print_board(&self.tiles.iter().map(|v| v.iter().map(|i| i.tile_type_string()).collect()).collect())
+            self.print_board(&self.tiles.iter().map(|i| i.tile_type_string()).collect::<Vec<ColoredString>>())
         }
 
         pub fn print_board_owners(&self){
-            self.print_board(&self.tiles.iter().map(|v| v.iter().map(|i| i.tile_owner_string()).collect()).collect())
+            self.print_board(&self.tiles.iter().map(|i| i.tile_owner_string()).collect::<Vec<ColoredString>>())
         }
 
         /// Print board to console
-        fn print_board(&self, tile_abbrs: &Vec<Vec<ColoredString>>){
+        fn print_board(&self, tile_abbrs: &[ColoredString]){
             // use /,\,_,| to create board
             println!("Board: {}w x {}h", self.board_width, self.board_height);
 
@@ -479,7 +479,7 @@ pub mod battle_map{
                 // print even row
                 for i in 0..self.board_width{
                     assert!(j % 2 == 0);
-                    print!("| {} ", tile_abbrs[j][i]);
+                    print!("| {} ", tile_abbrs[j * self.board_width + i]);
                 }
                 println!("|");
                 j += 1;
@@ -498,7 +498,7 @@ pub mod battle_map{
                 assert!(j % 2 == 1);
                 print!(" ");
                 for i in 0..self.board_width{ // odd row
-                    print!(" | {}", tile_abbrs[j][i])
+                    print!(" | {}", tile_abbrs[j * self.board_width + i])
                 }
      
                 println!(" |");
@@ -583,18 +583,13 @@ pub mod battle_map{
 
         /// Get a reference to a tile from the board
         pub fn get_tile(&self, row: usize, column: usize) -> Option<&MapTile>{
-            match self.tiles.get(row){
-                Some(v) => {
-                    v.get(column)
-                },
-                None => None
-            }
+            self.tiles.get(row * self.board_width + column)
         }
 
         /// Set a tile
         pub fn set_tile(&mut self, row: usize, column: usize, tile: MapTile){
-            self.get_tile(row, column).expect(&format!("Tile must exist to set, ({},{})", row, column));
-            self.tiles[row][column] = tile;
+            self.get_tile(row, column).unwrap_or_else(|| panic!("Tile must exist to set, ({},{})", row, column));
+            self.tiles[row * self.board_width + column] = tile;
         }
 
 
