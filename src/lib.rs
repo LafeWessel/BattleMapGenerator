@@ -182,7 +182,7 @@ pub mod map_tiles{
     //     Lake, // has 6 rotations
     // }
 
-    // enum AddOn{
+    // enum MapAddOn{
     //     Barricade,
     // }
 
@@ -196,7 +196,7 @@ pub mod map_tiles{
     pub struct MapTile{
         t_type: BattleMapTileType,
         owner: TileOwner
-        // add_on: Option<AddOn>,
+        // add_on: Option<MapAddOn>,
         // crossing: Option<RiverCrossing>,
     }
 
