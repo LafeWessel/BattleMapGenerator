@@ -369,7 +369,13 @@ pub mod battle_map{
 
             // TODO add better terrain generation
             // randomly place the town, river, mtn, hill tiles
-            let mut default_tiles: Vec<(usize, usize)> = (0..map.board_height).into_iter().map(|w| (0..map.board_width).into_iter().map(|h| (w,h)).collect::<Vec<(usize, usize)>>()).flatten().collect();
+            let mut default_tiles: Vec<(usize, usize)> = (0..map.board_height)
+                .into_iter()
+                .map(|w| (0..map.board_width)
+                    .into_iter().map(|h| (w,h))
+                    .collect::<Vec<(usize, usize)>>())
+                .flatten()
+                .collect();
             let mut gen = rand::thread_rng();
             for _ in 0..hill_ct{
                 let rnd: usize = gen.gen_range(0..default_tiles.len());
@@ -391,6 +397,11 @@ pub mod battle_map{
                 map.set_tile(default_tiles[rnd].0, default_tiles[rnd].1, MapTile::new(BattleMapTileType::River));
                 default_tiles.remove(rnd);
             }
+            // set remaining default tiles to plains
+            for t in default_tiles.iter(){
+                map.set_tile(t.0, t.1, MapTile::new(BattleMapTileType::Plains))
+            }
+
 
 
         }
